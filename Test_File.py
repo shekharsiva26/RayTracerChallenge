@@ -337,3 +337,48 @@ def test_matrix_inverse_multiplication():
     b_inv = b.inverse()
     product = c * b_inv
     assert product == a
+
+def test_translation_matrix():
+    transform = Matrix.translation(5, -3, 2)
+    p = Tuple(4, -4, 3, 1)
+    expected = Tuple(9, -7, 5, 1)
+    assert transform * p == expected
+
+def test_inverse_translation_matrix():
+    transform = Matrix.translation(5, -3, 2)
+    inv = transform.inverse()
+    p = Tuple(4, -4, 3, 1)
+    expected = Tuple(-1, -1, 1, 1)
+    print(expected)
+    print(inv*p)
+    assert inv * p == expected
+
+def test_translation_on_vector():
+    transform = Matrix.translation(5, -3, 2)
+    v = Tuple(4, -4, 3, 0)
+    assert transform * v == v
+
+def test_scaling_point():
+    transform = Matrix.scaling(2, 3, 4)
+    p = Tuple(-4, 6, 8, 1)
+    expected = Tuple(-8, 18, 32, 1)
+    assert transform * p == expected
+
+def test_scaling_vector():
+    transform = Matrix.scaling(2, 3, 4)
+    v = Tuple(-4, 6, 8, 0)
+    expected = Tuple(-8, 18, 32, 0)
+    assert transform * v == expected
+
+def test_inverse_scaling():
+    transform = Matrix.scaling(2, 3, 4)
+    inv = transform.inverse()
+    v = Tuple(-4, 6, 8, 0)
+    expected = Tuple(-2, 2, 2, 0)
+    assert inv * v == expected
+
+def test_reflection():
+    transform = Matrix.scaling(-1, 1, 1)
+    p = Tuple(2, 3, 4, 1)
+    expected = Tuple(-2, 3, 4, 1)
+    assert transform * p == expected

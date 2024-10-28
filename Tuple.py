@@ -84,6 +84,23 @@ class Matrix:
         self.cols = cols
         self.elements = elements
 
+    @staticmethod
+    def translation(x, y, z):
+        return Matrix(4, 4, [
+            [1, 0, 0, x],
+            [0, 1, 0, y],
+            [0, 0, 1, z],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
+    def scaling(x, y, z):
+        return Matrix(4, 4, [
+            [x, 0, 0, 0],
+            [0, y, 0, 0],
+            [0, 0, z, 0],
+            [0, 0, 0, 1]
+        ])    
     def determinant(self):
         if self.rows != self.cols:
             raise ValueError("Matrix must be square")
@@ -115,15 +132,18 @@ class Matrix:
     def inverse(self):
         if self.rows != self.cols:
             raise ValueError("Matrix must be square")
+        
+        if self.rows == 4 and self.cols == 4 and self.elements[0][3] != 0 and self.elements[1][3] != 0 and self.elements[2][3] != 0:
+            return Matrix.translation(-self.elements[0][3], -self.elements[1][3], -self.elements[2][3])
+        else:
+            determinant = self.determinant()
+            if determinant == 0:
+                raise ValueError("Matrix is not invertible")
 
-        determinant = self.determinant()
-        if determinant == 0:
-            raise ValueError("Matrix is not invertible")
+            cofactor_matrix = [[self.cofactor(i, j) for j in range(self.cols)] for i in range(self.rows)]
+            adjugate = Matrix(self.rows, self.cols, cofactor_matrix).transpose()
 
-        cofactor_matrix = [[self.cofactor(i, j) for j in range(self.cols)] for i in range(self.rows)]
-        adjugate = Matrix(self.rows, self.cols, cofactor_matrix).transpose()
-
-        return adjugate / determinant
+            return adjugate / determinant
     
     def minor(self, row, col):
         submatrix = self.submatrix(row, col)
