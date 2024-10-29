@@ -1,4 +1,4 @@
-from Tuple import Intersection, Intersections, Ray, Sphere, Tuple,Color, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Intersection, Intersections, Ray, Sphere, Tuple,Color, intersect, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
 import pytest
 import math
 
@@ -475,3 +475,68 @@ def test_intersect_sets_object():
     assert len(xs) == 2
     assert xs[0].object == s
     assert xs[1].object == s
+
+def test_hit_positive_t():
+    s = Sphere()
+    i1 = Intersection(1, s)
+    i2 = Intersection(2, s)
+    xs = Intersections(i2, i1)
+    i = xs.hit()
+    assert i == i1
+
+def test_hit_some_negative_t():
+    s = Sphere()
+    i1 = Intersection(-1, s)
+    i2 = Intersection(1, s)
+    xs = Intersections(i2, i1)
+    i = xs.hit()
+    assert i == i2
+
+def test_hit_all_negative_t():
+    s = Sphere()
+    i1 = Intersection(-2, s)
+    i2 = Intersection(-1, s)
+    xs = Intersections(i2, i1)
+    i = xs.hit()
+    assert i is None
+
+
+def test_ray_translation():
+    r = Ray(Tuple(1, 2, 3, 1), Tuple(0, 1, 0, 0))
+    m = Matrix.translation(3, 4, 5)
+    r2 = r.transform(m)
+    assert r2.origin == Tuple(4, 6, 8, 1)
+    assert r2.direction == Tuple(0, 1, 0, 0)
+
+def test_ray_scaling():
+    r = Ray(Tuple(1, 2, 3, 1), Tuple(0, 1, 0, 0))
+    m = Matrix.scaling(2, 3, 4)
+    r2 = r.transform(m)
+    assert r2.origin == Tuple(2, 6, 12, 1)
+    assert r2.direction == Tuple(0, 3, 0, 0)
+
+def test_default_sphere_transform():
+    s = Sphere()
+    assert s.transform == identity_matrix
+
+def test_set_sphere_transform():
+    s = Sphere()
+    t = Matrix.translation(2, 3, 4)
+    s.set_transform(t)
+    assert s.transform == t
+
+def test_intersect_scaled_sphere():
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    s = Sphere()
+    s.set_transform(Matrix.scaling(2, 2, 2))
+    xs = intersect(s,r)
+    assert len(xs) == 2
+    assert xs[0].t == 3
+    assert xs[1].t == 7
+
+def test_intersect_translated_sphere():
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    s = Sphere()
+    s.set_transform(Matrix.translation(5, 0, 0))
+    xs = intersect(s,r)
+    assert len(xs) == 0

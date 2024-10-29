@@ -30,7 +30,7 @@ class Tuple:
     def magnitude(self):
         return math.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
     def normalize(self):
-        return Tuple(self.x / self.magnitude(),self.y / self.magnitude(),self.z / self.magnitude())
+        return Tuple(self.x / self.magnitude(),self.y / self.magnitude(),self.z / self.magnitude(),self.w)
     def dot(self,b):
         return self.x *b.x + self.y *b.y +self.z *b.z 
     def cross(self, other):
@@ -39,89 +39,6 @@ class Tuple:
             self.z * other.x - self.x * other.z,
             self.x * other.y - self.y * other.x,0)
 
-class Sphere:
-    def __init__(self, center=Tuple(0, 0, 0, 1), radius=1):
-        self.center = center
-        self.radius = radius
-
-    def intersect(self, ray):
-        sphere_to_ray = ray.origin - self.center
-        a = ray.direction.dot(ray.direction)
-        b = 2 * sphere_to_ray.dot(ray.direction)
-        c = sphere_to_ray.dot(sphere_to_ray) - self.radius * self.radius
-
-        discriminant = b * b - 4 * a * c
-        if discriminant < 0: 
-            return Intersections()  # No intersections
-        else:
-            t1 = (-b - math.sqrt(discriminant)) / (2 * a)
-            t2 = (-b + math.sqrt(discriminant)) / (2 * a)
-            return Intersections(Intersection(t1, self), Intersection(t2, self))
-
-class Intersection:
-    def __init__(self, t, object):
-        self.t = t
-        self.object = object
-
-class Intersections:
-    def __init__(self, *intersections):
-        self.intersections = list(intersections)
-
-    def __len__(self):
-        return len(self.intersections)
-
-    def __getitem__(self, index):
-        return self.intersections[index]
-
-
-class Ray:
-    def __init__(self, origin, direction):
-        self.origin = origin
-        self.direction = direction
-
-    def position(self, t):
-        return self.origin + self.direction * t
-
-class Color:
-    def __init__(self, red, green, blue):
-        self.red = red
-        self.green = green
-        self.blue = blue
-
-    def __repr__(self):
-        return f"Color(red={self.red}, green={self.green}, blue={self.blue})" 
-
-
-    def __add__(self, other):
-        if not isinstance(other, Color):
-            raise TypeError("Can only add Color objects")
-        return Color(self.red + other.red, self.green + other.green, self.blue + other.blue)
-
-    def __sub__(self, other):
-        if not isinstance(other, Color):
-            raise TypeError("Can only subtract Color objects")
-        return Color(self.red - other.red, self.green - other.green, self.blue - other.blue)
-    
-    def __eq__(self, other):
-        return abs(self.red - other.red) <= 0.001 and abs(self.green - other.green) <=0.001 and abs(self.blue - other.blue) <=0.001 
-
-    def __mul__(self, other):
-        if isinstance(other, (int, float)):
-            return Color(self.red * other, self.green * other, self.blue * other)
-        elif isinstance(other, Color):
-            return Color(self.red * other.red, self.green * other.green, self.blue * other.blue)
-        else:
-            raise TypeError("Can only multiply Color by a number or another Color")
-
-
-
-
-    
-def point(x, y, z):
-    return Tuple(x, y, z, 1)
-
-def vector(x, y, z):
-    return Tuple(x, y, z, 0)
 
 class Matrix:
     def __init__(self, rows, cols, elements):
@@ -286,6 +203,112 @@ identity_matrix = Matrix(4, 4, [
     [0, 0, 1, 0],
     [0, 0, 0, 1]
 ])
+
+
+class Sphere:
+    def __init__(self, center=Tuple(0, 0, 0, 1), radius=1):
+        self.center = center
+        self.radius = radius
+
+    def __init__(self, transform=identity_matrix,center=Tuple(0, 0, 0, 1),radius=1):
+        self.transform = transform
+        self.center = center
+        self.radius = radius
+
+    def set_transform(self, t):
+        self.transform = t
+
+    def intersect(self, ray):
+        sphere_to_ray = ray.origin - self.center
+        a = ray.direction.dot(ray.direction)
+        b = 2 * sphere_to_ray.dot(ray.direction)
+        c = sphere_to_ray.dot(sphere_to_ray) - self.radius * self.radius
+
+        discriminant = b * b - 4 * a * c
+        if discriminant < 0: 
+            return Intersections()  # No intersections
+        else:
+            t1 = (-b - math.sqrt(discriminant)) / (2 * a)
+            t2 = (-b + math.sqrt(discriminant)) / (2 * a)
+            return Intersections(Intersection(t1, self), Intersection(t2, self))
+
+class Intersection:
+    def __init__(self, t, object):
+        self.t = t
+        self.object = object
+
+class Intersections:
+    def __init__(self, *intersections):
+        self.intersections = list(intersections)
+
+    def __len__(self):
+        return len(self.intersections)
+
+    def __getitem__(self, index):
+        return self.intersections[index]
+
+    def hit(self):
+        hit = None
+        for i in self.intersections:
+            if i.t >= 0 and (hit is None or i.t < hit.t):
+                hit = i
+        return hit
+
+
+
+class Ray:
+    def __init__(self, origin, direction):
+        self.origin = origin
+        self.direction = direction
+
+    def position(self, t):
+        return self.origin + self.direction * t
+    
+    def transform(self, m):
+        return Ray(m * self.origin, m * self.direction)
+
+class Color:
+    def __init__(self, red, green, blue):
+        self.red = red
+        self.green = green
+        self.blue = blue
+
+    def __repr__(self):
+        return f"Color(red={self.red}, green={self.green}, blue={self.blue})" 
+
+
+    def __add__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only add Color objects")
+        return Color(self.red + other.red, self.green + other.green, self.blue + other.blue)
+
+    def __sub__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only subtract Color objects")
+        return Color(self.red - other.red, self.green - other.green, self.blue - other.blue)
+    
+    def __eq__(self, other):
+        return abs(self.red - other.red) <= 0.001 and abs(self.green - other.green) <=0.001 and abs(self.blue - other.blue) <=0.001 
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return Color(self.red * other, self.green * other, self.blue * other)
+        elif isinstance(other, Color):
+            return Color(self.red * other.red, self.green * other.green, self.blue * other.blue)
+        else:
+            raise TypeError("Can only multiply Color by a number or another Color")
+
+
+
+
+    
+def point(x, y, z):
+    return Tuple(x, y, z, 1)
+
+def vector(x, y, z):
+    return Tuple(x, y, z, 0)
+
+
 class Canvas:
     def __init__(self, width, height):
         self.width = width
@@ -316,3 +339,7 @@ def canvas_to_ppm(canvas):
     ppm_lines.append("")
 
     return "\n".join(ppm_lines)
+
+def intersect(sphere, ray):
+    transformed_ray = ray.transform(sphere.transform.inverse())
+    return sphere.intersect(transformed_ray)
