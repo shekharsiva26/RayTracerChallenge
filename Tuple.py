@@ -343,3 +343,13 @@ def canvas_to_ppm(canvas):
 def intersect(sphere, ray):
     transformed_ray = ray.transform(sphere.transform.inverse())
     return sphere.intersect(transformed_ray)
+
+def normal_at(sphere, world_point):
+    object_point = sphere.transform.inverse() * world_point
+    object_normal = object_point - Tuple(0, 0, 0, 1)
+    world_normal = sphere.transform.inverse().transpose() * object_normal
+    world_normal.w = 0
+    return world_normal.normalize()
+
+def reflect(v, n):
+    return v - n * 2 * v.dot(n)

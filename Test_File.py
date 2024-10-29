@@ -1,4 +1,4 @@
-from Tuple import Intersection, Intersections, Ray, Sphere, Tuple,Color, intersect, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Intersection, Intersections, Ray, Sphere, Tuple,Color, intersect, reflect, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
 import pytest
 import math
 
@@ -540,3 +540,9 @@ def test_intersect_translated_sphere():
     s.set_transform(Matrix.translation(5, 0, 0))
     xs = intersect(s,r)
     assert len(xs) == 0
+
+def test_reflection():
+    v = Tuple(1, -1, 0, 0)
+    n = Tuple(0, 1, 0, 0)
+    r = reflect(v, n)
+    assert r == Tuple(1, 1, 0, 0)
