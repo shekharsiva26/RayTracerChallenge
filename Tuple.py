@@ -1,5 +1,79 @@
 import math
 
+class Tuple:
+    def __init__(self, x, y, z, w):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+
+    def is_point(self):
+        return self.w == 1.0
+
+    def is_vector(self):
+        return self.w == 0.0
+    def __eq__(self, other):
+        return abs(self.x - other.x ) <0.001 and abs(self.y - other.y ) <0.001 and abs(self.z - other.z ) <0.001 and self.w == other.w
+
+    def __repr__(self):
+        return  f"Tuple({self.x}, {self.y}, {self.z}, {self.w})"
+    def __add__(self, other):
+        return Tuple(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+    def __sub__(self, other):
+        return  Tuple(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
+    def __neg__(self):
+        return Tuple(-self.x, -self.y, -self.z, -self.w)
+    def __mul__(self, scalar):
+        return Tuple(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar)
+    def __truediv__(self, scalar):
+        return Tuple(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
+    def magnitude(self):
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
+    def normalize(self):
+        return Tuple(self.x / self.magnitude(),self.y / self.magnitude(),self.z / self.magnitude())
+    def dot(self,b):
+        return self.x *b.x + self.y *b.y +self.z *b.z 
+    def cross(self, other):
+        return Tuple(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,0)
+
+class Sphere:
+    def __init__(self, center=Tuple(0, 0, 0, 1), radius=1):
+        self.center = center
+        self.radius = radius
+
+    def intersect(self, ray):
+        sphere_to_ray = ray.origin - self.center
+        a = ray.direction.dot(ray.direction)
+        b = 2 * sphere_to_ray.dot(ray.direction)
+        c = sphere_to_ray.dot(sphere_to_ray) - self.radius * self.radius
+
+        discriminant = b * b - 4 * a * c
+        if discriminant < 0: 
+            return Intersections()  # No intersections
+        else:
+            t1 = (-b - math.sqrt(discriminant)) / (2 * a)
+            t2 = (-b + math.sqrt(discriminant)) / (2 * a)
+            return Intersections(Intersection(t1, self), Intersection(t2, self))
+
+class Intersection:
+    def __init__(self, t, object):
+        self.t = t
+        self.object = object
+
+class Intersections:
+    def __init__(self, *intersections):
+        self.intersections = list(intersections)
+
+    def __len__(self):
+        return len(self.intersections)
+
+    def __getitem__(self, index):
+        return self.intersections[index]
+
+
 class Ray:
     def __init__(self, origin, direction):
         self.origin = origin
@@ -39,44 +113,7 @@ class Color:
         else:
             raise TypeError("Can only multiply Color by a number or another Color")
 
-class Tuple:
-    def __init__(self, x, y, z, w):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.w = w
 
-    def is_point(self):
-        return self.w == 1.0
-
-    def is_vector(self):
-        return self.w == 0.0
-    def __eq__(self, other):
-        return abs(self.x - other.x ) <0.001 and abs(self.y - other.y ) <0.001 and abs(self.z - other.z ) <0.001 and self.w == other.w
-
-    def __repr__(self):
-        return  f"Tuple({self.x}, {self.y}, {self.z}, {self.w})"
-    def __add__(self, other):
-        return Tuple(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
-    def __sub__(self, other):
-        return  Tuple(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
-    def __neg__(self):
-        return Tuple(-self.x, -self.y, -self.z, -self.w)
-    def __mul__(self, scalar):
-        return Tuple(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar)
-    def __truediv__(self, scalar):
-        return Tuple(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
-    def magnitude(self):
-        return math.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
-    def normalize(self):
-        return Tuple(self.x / self.magnitude(),self.y / self.magnitude(),self.z / self.magnitude())
-    def dot(self,b):
-        return self.x *b.x + self.y *b.y +self.z *b.z 
-    def cross(self, other):
-        return Tuple(
-            self.y * other.z - self.z * other.y,
-            self.z * other.x - self.x * other.z,
-            self.x * other.y - self.y * other.x,0)
 
 
     

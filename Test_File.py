@@ -1,4 +1,4 @@
-from Tuple import Ray, Tuple,Color, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Intersection, Intersections, Ray, Sphere, Tuple,Color, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
 import pytest
 import math
 
@@ -451,3 +451,27 @@ def test_ray_position():
     assert r.position(1) == Tuple(3, 3, 4, 1)
     assert r.position(-1) == Tuple(1, 3, 4, 1)
     assert r.position(2.5) == Tuple(4.5, 3, 4, 1)
+
+def test_intersection():
+    s = Sphere()
+    i = Intersection(3.5, s)
+    assert i.t == 3.5
+    assert i.object == s
+
+def test_intersections():
+    s = Sphere()
+    i1 = Intersection(1, s)
+    i2 = Intersection(2, s)
+    xs = Intersections(i1, i2)
+    assert len(xs) == 2
+    assert xs[0].t == 1
+    assert xs[1].t == 2
+
+def test_intersect_sets_object(): 
+
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    s = Sphere()
+    xs = s.intersect(r)
+    assert len(xs) == 2
+    assert xs[0].object == s
+    assert xs[1].object == s
