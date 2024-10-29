@@ -1,4 +1,4 @@
-from Tuple import Tuple,Color, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Ray, Tuple,Color, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
 import pytest
 import math
 
@@ -382,3 +382,72 @@ def test_reflection():
     p = Tuple(2, 3, 4, 1)
     expected = Tuple(-2, 3, 4, 1)
     assert transform * p == expected
+
+def test_rotation_x():
+    p = Tuple(0, 1, 0, 1)
+    half_quarter_x = Matrix.rotation_x(math.pi / 4)
+    inv_half_quarter_x = half_quarter_x.inverse()
+    expected = Tuple(0, math.sqrt(2) / 2, -math.sqrt(2) / 2, 1)
+    assert inv_half_quarter_x * p == expected
+
+def test_rotation_y():
+    p = Tuple(0, 0, 1, 1)
+    half_quarter_y = Matrix.rotation_y(math.pi / 4)
+    full_quarter_y = Matrix.rotation_y(math.pi / 2)
+    expected_half = Tuple(math.sqrt(2) / 2, 0, math.sqrt(2) / 2, 1)
+    expected_full = Tuple(1, 0, 0, 1)
+    assert half_quarter_y * p == expected_half
+    assert full_quarter_y * p == expected_full
+
+def test_rotation_z():
+    p = Tuple(0, 1, 0, 1)
+    half_quarter_z = Matrix.rotation_z(math.pi / 4)
+    full_quarter_z = Matrix.rotation_z(math.pi / 2)
+    expected_half = Tuple(-math.sqrt(2) / 2, math.sqrt(2) / 2, 0, 1)
+    expected_full = Tuple(-1, 0, 0, 1)
+    assert half_quarter_z * p == expected_half
+    assert full_quarter_z * p == expected_full
+
+def test_shearing_xy():
+    transform = Matrix.shearing(1, 0, 0, 0, 0, 0)
+    p = Tuple(2, 3, 4, 1)
+    expected = Tuple(5, 3, 4, 1)
+    assert transform * p == expected
+
+def test_sequential_transformations():
+    p = Tuple(1, 0, 1, 1)
+    A = Matrix.rotation_x(math.pi / 2)
+    B = Matrix.scaling(5, 5, 5)
+    C = Matrix.translation(10, 5, 7)
+
+    p2 = A * p
+    p3 = B * p2
+    p4 = C * p3
+
+    assert p2 == Tuple(1, -1, 0, 1)
+    assert p3 == Tuple(5, -5, 0, 1)
+    assert p4 == Tuple(15, 0, 7, 1)
+
+def test_chained_transformations():
+    p = Tuple(1, 0, 1, 1)
+    A = Matrix.rotation_x(math.pi / 2)
+    B = Matrix.scaling(5, 5, 5)
+    C = Matrix.translation(10, 5, 7)
+    T = C * B * A
+
+    p2 = T * p
+    assert p2 == Tuple(15, 0, 7, 1)
+
+def test_ray_creation():
+    origin = Tuple(1, 2, 3, 1)
+    direction = Tuple(4, 5, 6, 0)
+    r = Ray(origin, direction)
+    assert r.origin == origin
+    assert r.direction == direction
+
+def test_ray_position():
+    r = Ray(Tuple(2, 3, 4, 1), Tuple(1, 0, 0, 0))
+    assert r.position(0) == Tuple(2, 3, 4, 1)
+    assert r.position(1) == Tuple(3, 3, 4, 1)
+    assert r.position(-1) == Tuple(1, 3, 4, 1)
+    assert r.position(2.5) == Tuple(4.5, 3, 4, 1)

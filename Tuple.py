@@ -1,5 +1,13 @@
 import math
 
+class Ray:
+    def __init__(self, origin, direction):
+        self.origin = origin
+        self.direction = direction
+
+    def position(self, t):
+        return self.origin + self.direction * t
+
 class Color:
     def __init__(self, red, green, blue):
         self.red = red
@@ -44,7 +52,7 @@ class Tuple:
     def is_vector(self):
         return self.w == 0.0
     def __eq__(self, other):
-        return self.x == other.x and self.y == other.y and self.z == other.z and self.w == other.w
+        return abs(self.x - other.x ) <0.001 and abs(self.y - other.y ) <0.001 and abs(self.z - other.z ) <0.001 and self.w == other.w
 
     def __repr__(self):
         return  f"Tuple({self.x}, {self.y}, {self.z}, {self.w})"
@@ -100,7 +108,50 @@ class Matrix:
             [0, y, 0, 0],
             [0, 0, z, 0],
             [0, 0, 0, 1]
-        ])    
+        ])
+
+    @staticmethod
+    def rotation_x(radians):
+        c = math.cos(radians)
+        s = math.sin(radians)
+        return Matrix(4, 4, [
+            [1, 0, 0, 0],
+            [0, c, -s, 0],
+            [0, s, c, 0],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
+    def rotation_y(radians):
+        c = math.cos(radians)
+        s = math.sin(radians)
+        return Matrix(4, 4, [
+            [c, 0, s, 0],
+            [0, 1, 0, 0],
+            [-s, 0, c, 0],
+            [0, 0, 0, 1]
+        ])
+
+    @staticmethod
+    def rotation_z(radians):
+        c = math.cos(radians)
+        s = math.sin(radians)
+        return Matrix(4, 4, [
+            [c, -s, 0, 0],
+            [s, c, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ])
+    
+    @staticmethod
+    def shearing(xy, xz, yx, yz, zx, zy):
+        return Matrix(4, 4, [
+            [1, xy, xz, 0],
+            [yx, 1, yz, 0],
+            [zx, zy, 1, 0],
+            [0, 0, 0, 1]
+        ])
+
     def determinant(self):
         if self.rows != self.cols:
             raise ValueError("Matrix must be square")
