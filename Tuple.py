@@ -471,3 +471,17 @@ def color_at(world, ray):
 
 def intersect_sort_function(intersection):
   return intersection.t
+
+def view_transform(from_point, to_point, up_vector):
+    forward = (to_point - from_point).normalize()
+    upn = up_vector.normalize()
+    left = forward.cross(upn)
+    true_up = left.cross(forward)
+
+    orientation = Matrix(4,4,[[left.x, left.y, left.z, 0],
+                          [true_up.x, true_up.y, true_up.z, 0],
+                          [-forward.x, -forward.y, -forward.z, 0],
+                          [0, 0, 0, 1]])
+    translation = Matrix.translation(-from_point.x, -from_point.y, -from_point.z)
+
+    return orientation * translation

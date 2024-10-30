@@ -1,4 +1,4 @@
-from Tuple import Intersection, Intersections, Material, PointLight, Ray, Sphere, Tuple,Color, color_at, default_world, intersect, intersect_world, lighting, prepare_computations, reflect, shade_hit, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Intersection, Intersections, Material, PointLight, Ray, Sphere, Tuple,Color, color_at, default_world, intersect, intersect_world, lighting, prepare_computations, reflect, shade_hit, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix, view_transform
 import pytest
 import math
 
@@ -618,10 +618,29 @@ def test_color_at_hit():
     c = color_at(w, r)
     assert c == (Color(0.38066, 0.47583, 0.2855))
 
-def main():
-    test_intersect_world()   
 
-if __name__ == "__main__":
-    main()
+def test_view_transform_identity():
+    from_point = Tuple(0, 0, 0, 1)
+    to_point = Tuple(0, 0, -1, 1)
+    up = Tuple(0, 1, 0, 0)
+    t = view_transform(from_point, to_point, up)
+    assert t == identity_matrix
 
- 
+def test_view_transform_positive_z():
+    from_point = Tuple(0, 0, 0, 1)
+    to_point = Tuple(0, 0, 1, 1)
+    up = Tuple(0, 1, 0, 0)
+    t = view_transform(from_point, to_point, up)
+    assert t == Matrix.scaling(-1, 1, -1)
+
+def test_view_transform_arbitrary_view():
+    from_point = Tuple(1, 3, 2, 1)
+    to_point = Tuple(4, -2, 8, 1)
+    up = Tuple(1, 1, 0, 0)
+    t = view_transform(from_point, to_point, up)
+    expected = Matrix(4,4,[[-0.50709, 0.50709, 0.67612, -2.36643],
+                        [0.76772, 0.60609, 0.12122, -2.82843],
+                        [-0.35857, 0.59761, -0.71714, 0.00000],
+                        [0.0, 0.0, 0.0, 1.0]])
+    assert t == expected
+
