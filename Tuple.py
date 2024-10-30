@@ -485,3 +485,24 @@ def view_transform(from_point, to_point, up_vector):
     translation = Matrix.translation(-from_point.x, -from_point.y, -from_point.z)
 
     return orientation * translation
+
+class Camera:
+    def __init__(self, hsize, vsize, field_of_view):
+        self.hsize = hsize
+        self.vsize = vsize
+        self.field_of_view = field_of_view
+        self.transform = identity_matrix
+
+        half_view = math.tan(field_of_view / 2)
+        aspect_ratio = hsize / vsize
+        if aspect_ratio >= 1:
+            self.half_width = half_view
+            self.half_height = half_view / aspect_ratio
+        else:
+            self.half_width = half_view * aspect_ratio
+            self.half_height = half_view
+
+        self.pixel_size = self.half_width * 2 / self.hsize
+
+def almost_equal(val1,val2):
+    return abs(val1 -val2) <0.001

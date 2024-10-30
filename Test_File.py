@@ -1,4 +1,4 @@
-from Tuple import Intersection, Intersections, Material, PointLight, Ray, Sphere, Tuple,Color, color_at, default_world, intersect, intersect_world, lighting, prepare_computations, reflect, shade_hit, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix, view_transform
+from Tuple import *
 import pytest
 import math
 
@@ -644,3 +644,10 @@ def test_view_transform_arbitrary_view():
                         [0.0, 0.0, 0.0, 1.0]])
     assert t == expected
 
+def test_camera_pixel_size_horizontal():
+    c = Camera(200, 125, math.pi / 2)
+    assert almost_equal(c.pixel_size, 0.01)
+
+def test_camera_pixel_size_vertical():
+    c = Camera(125, 200, math.pi / 2)
+    assert almost_equal(c.pixel_size, 0.01)
