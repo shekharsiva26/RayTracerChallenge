@@ -413,6 +413,8 @@ class World:
     def __init__(self, objects=[], light=None):
         self.objects = objects
         self.light = light
+    def add_object(self,object):
+        self.objects.append(object)
 
 def default_world():
     light = PointLight(Tuple(-10, 10, -10, 1), Color(1, 1, 1))
@@ -506,3 +508,26 @@ class Camera:
 
 def almost_equal(val1,val2):
     return abs(val1 -val2) <0.001
+
+def ray_for_pixel(camera:Camera , px, py):
+    xoffset = (px + 0.5) * camera.pixel_size
+    yoffset = (py + 0.5) * camera.pixel_size
+
+    world_x = camera.half_width - xoffset
+    world_y = camera.half_height - yoffset 
+    pixel_position = camera.transform.inverse() * Tuple(world_x, world_y, -1, 1)
+    origin = camera.transform.inverse() * Tuple(0, 0, 0, 1)
+    direction = (pixel_position - origin).normalize()
+
+    return Ray(origin, direction)
+
+def render(camera, world):
+    image = Canvas(camera.hsize, camera.vsize)
+
+    for y in range(camera.vsize):
+        for x in range(camera.hsize):
+            ray = ray_for_pixel(camera, x, y)
+            color = color_at(world, ray)
+            image.write_pixel(x, y, color)
+
+    return image

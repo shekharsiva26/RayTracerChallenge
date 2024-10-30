@@ -651,3 +651,23 @@ def test_camera_pixel_size_horizontal():
 def test_camera_pixel_size_vertical():
     c = Camera(125, 200, math.pi / 2)
     assert almost_equal(c.pixel_size, 0.01)
+
+
+def test_ray_for_pixel_center():
+    c = Camera(201, 101, math.pi / 2)
+    r = ray_for_pixel(c, 100, 50)
+    assert r.origin == Tuple(0, 0, 0, 1)
+    assert r.direction == Tuple(0, 0, -1, 0)
+
+def test_ray_for_pixel_corner():
+    c = Camera(201, 101, math.pi / 2)
+    r = ray_for_pixel(c, 0, 0)
+    assert r.origin == Tuple(0, 0, 0, 1)
+    assert r.direction == (Tuple(0.66519, 0.33259, -0.66851, 0))
+
+def test_ray_for_pixel_transformed_camera():
+    c = Camera(201, 101, math.pi / 2)
+    c.transform = Matrix.rotation_y(math.pi / 4) * Matrix.translation(0, -2, 5)
+    r = ray_for_pixel(c, 100, 50)
+    assert r.origin == (Tuple(0, 2, -5, 1))
+    assert r.direction == (Tuple(math.sqrt(2) / 2, 0, -math.sqrt(2) / 2, 0))
