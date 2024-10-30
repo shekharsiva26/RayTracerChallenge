@@ -203,13 +203,61 @@ identity_matrix = Matrix(4, 4, [
     [0, 0, 1, 0],
     [0, 0, 0, 1]
 ])
+class Color:
+    def __init__(self, red, green, blue):
+        self.red = red
+        self.green = green
+        self.blue = blue
+
+    def __repr__(self):
+        return f"Color(red={self.red}, green={self.green}, blue={self.blue})" 
+
+
+    def __add__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only add Color objects")
+        return Color(self.red + other.red, self.green + other.green, self.blue + other.blue)
+
+    def __sub__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only subtract Color objects")
+        return Color(self.red - other.red, self.green - other.green, self.blue - other.blue)
+    
+    def __eq__(self, other):
+        return abs(self.red - other.red) <= 0.001 and abs(self.green - other.green) <=0.001 and abs(self.blue - other.blue) <=0.001 
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return Color(self.red * other, self.green * other, self.blue * other)
+        elif isinstance(other, Color):
+            return Color(self.red * other.red, self.green * other.green, self.blue * other.blue)
+        else:
+            raise TypeError("Can only multiply Color by a number or another Color")
+
+
+class PointLight:
+    def __init__(self, position, intensity):
+        self.position = position
+        self.intensity = intensity
+
+class Material:
+    def __init__(self, color=Color(1, 1, 1), ambient=0.1, diffuse=0.9, specular=0.9, shininess=200):
+        self.color = color
+        self.ambient = ambient
+        self.diffuse = diffuse
+        self.specular = specular
+        self.shininess = shininess
 
 
 class Sphere:
     def __init__(self, center=Tuple(0, 0, 0, 1), radius=1):
         self.center = center
         self.radius = radius
+    def material(self):
+        return self._material
 
+    def set_material(self, material):
+        self._material = material
     def __init__(self, transform=identity_matrix,center=Tuple(0, 0, 0, 1),radius=1):
         self.transform = transform
         self.center = center
@@ -267,38 +315,6 @@ class Ray:
     def transform(self, m):
         return Ray(m * self.origin, m * self.direction)
 
-class Color:
-    def __init__(self, red, green, blue):
-        self.red = red
-        self.green = green
-        self.blue = blue
-
-    def __repr__(self):
-        return f"Color(red={self.red}, green={self.green}, blue={self.blue})" 
-
-
-    def __add__(self, other):
-        if not isinstance(other, Color):
-            raise TypeError("Can only add Color objects")
-        return Color(self.red + other.red, self.green + other.green, self.blue + other.blue)
-
-    def __sub__(self, other):
-        if not isinstance(other, Color):
-            raise TypeError("Can only subtract Color objects")
-        return Color(self.red - other.red, self.green - other.green, self.blue - other.blue)
-    
-    def __eq__(self, other):
-        return abs(self.red - other.red) <= 0.001 and abs(self.green - other.green) <=0.001 and abs(self.blue - other.blue) <=0.001 
-
-    def __mul__(self, other):
-        if isinstance(other, (int, float)):
-            return Color(self.red * other, self.green * other, self.blue * other)
-        elif isinstance(other, Color):
-            return Color(self.red * other.red, self.green * other.green, self.blue * other.blue)
-        else:
-            raise TypeError("Can only multiply Color by a number or another Color")
-
-
 
 
     
@@ -353,3 +369,21 @@ def normal_at(sphere, world_point):
 
 def reflect(v, n):
     return v - n * 2 * v.dot(n)
+
+def lighting(material, light, point, eyev, normalv):
+    effective_color = light.intensity * material.color
+    
+    # Ambient lighting
+    ambient = effective_color * material.ambient
+
+    # Diffuse lighting
+    light_v = (light.position - point).normalize()
+    light_dot_normal = light_v.dot(normalv)
+    diffuse = effective_color * material.diffuse * max(light_dot_normal, 0)
+
+    # Specular lighting
+    reflect_v = reflect(-light_v, normalv)
+    reflect_dot_eye = reflect_v.dot(eyev)
+    specular = effective_color * material.specular * pow(max(reflect_dot_eye, 0), material.shininess)
+
+    return ambient + diffuse + specular

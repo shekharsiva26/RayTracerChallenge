@@ -1,4 +1,4 @@
-from Tuple import Intersection, Intersections, Ray, Sphere, Tuple,Color, intersect, reflect, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Intersection, Intersections, Material, PointLight, Ray, Sphere, Tuple,Color, intersect, lighting, reflect, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
 import pytest
 import math
 
@@ -546,3 +546,43 @@ def test_reflection():
     n = Tuple(0, 1, 0, 0)
     r = reflect(v, n)
     assert r == Tuple(1, 1, 0, 0)
+
+def test_lighting_eye_between_light_and_surface():
+    m = Material()
+    position = Tuple(0, 0, 0, 1)
+    eyev = Tuple(0, 0, -1, 0)
+    normalv = Tuple(0, 0, -1, 0)
+    light = PointLight(Tuple(0, 0, -10, 1), Color(1, 1, 1))
+    result = lighting(m, light, position, eyev, normalv)
+    assert result == Color(1.9, 1.9, 1.9)
+
+def test_lighting_eye_offset_45_degrees():
+    m = Material()
+    position = Tuple(0, 0, 0, 1)
+    eyev = Tuple(0, math.sqrt(2) / 2, -math.sqrt(2) / 2, 0)
+    normalv = Tuple(0, 0, -1, 0)
+    light = PointLight(Tuple(0, 0, -10, 1), Color(1, 1, 1))
+    result = lighting(m, light, position, eyev, normalv)
+    assert result == Color(1.0, 1.0, 1.0)
+
+def test_lighting_light_offset_45_degrees():
+    m = Material()
+    position = Tuple(0, 0, 0, 1)
+    eyev = Tuple(0, 0, -1, 0)
+    normalv = Tuple(0, 0, -1, 0)
+    light = PointLight(Tuple(0, 10, -10, 1), Color(1, 1, 1))
+    result = lighting(m, light, position, eyev, normalv)
+    # The exact result might vary slightly due to floating-point precision.
+    # You can use a tolerance-based comparison or adjust the expected result to account for this.
+    assert result == (Color(0.7364, 0.7364, 0.7364))
+
+def test_lighting_light_offset_45_degrees_with_surface_normal_offset_45_degrees():
+    m = Material()
+    position = Tuple(0, 0, 0, 1)
+    normalv = Tuple(0, 0, -1, 0)
+    eyev = Tuple(0, -math.sqrt(2) / 2, -math.sqrt(2) / 2, 0)
+    light = PointLight(Tuple(0, 10, -10, 1), Color(1, 1, 1))
+    result = lighting(m, light, position, eyev, normalv)
+    # The exact result might vary slightly due to floating-point precision.
+    # You can use a tolerance-based comparison or adjust the expected result to account for this.
+    assert result == (Color(1.636, 1.636, 1.636))
