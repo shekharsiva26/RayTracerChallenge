@@ -1,4 +1,4 @@
-from Tuple import Intersection, Intersections, Material, PointLight, Ray, Sphere, Tuple,Color, intersect, lighting, reflect, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
+from Tuple import Intersection, Intersections, Material, PointLight, Ray, Sphere, Tuple,Color, color_at, default_world, intersect, intersect_world, lighting, prepare_computations, reflect, shade_hit, vector,point,canvas_to_ppm,Canvas, Matrix,identity_matrix
 import pytest
 import math
 
@@ -586,3 +586,42 @@ def test_lighting_light_offset_45_degrees_with_surface_normal_offset_45_degrees(
     # The exact result might vary slightly due to floating-point precision.
     # You can use a tolerance-based comparison or adjust the expected result to account for this.
     assert result == (Color(1.636, 1.636, 1.636))
+
+def test_default_world():
+    w = default_world()
+    assert len(w.objects) == 2
+    assert w.light == PointLight(Tuple(-10, 10, -10, 1), Color(1, 1, 1))
+
+def test_intersect_world():
+    w = default_world()
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    xs = intersect_world(w, r)
+    assert len(xs) == 4
+    assert xs[0].t == 4
+    assert xs[1].t == 4.5
+    assert xs[2].t == 5.5
+    assert xs[3].t == 6
+
+def test_shade_hit():
+    w = default_world()
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    xs = intersect_world(w,r)
+    i = xs.hit()
+    comps = prepare_computations(i, r)
+    c = shade_hit(w, comps)
+    # Assert that c is approximately equal to the expected color
+    assert c == (Color(0.38066, 0.47583, 0.2855))
+
+def test_color_at_hit():
+    w = default_world()
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    c = color_at(w, r)
+    assert c == (Color(0.38066, 0.47583, 0.2855))
+
+def main():
+    test_intersect_world()   
+
+if __name__ == "__main__":
+    main()
+
+ 

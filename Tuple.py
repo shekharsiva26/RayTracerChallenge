@@ -1,4 +1,5 @@
 import math
+import collections
 
 class Tuple:
     def __init__(self, x, y, z, w):
@@ -239,6 +240,8 @@ class PointLight:
     def __init__(self, position, intensity):
         self.position = position
         self.intensity = intensity
+    def __eq__(self, other):
+        return self.intensity == other.intensity  and self.position == other.position
 
 class Material:
     def __init__(self, color=Color(1, 1, 1), ambient=0.1, diffuse=0.9, specular=0.9, shininess=200):
@@ -285,7 +288,7 @@ class Intersection:
         self.t = t
         self.object = object
 
-class Intersections:
+class Intersections(collections.MutableSequence):
     def __init__(self, *intersections):
         self.intersections = list(intersections)
 
@@ -294,6 +297,24 @@ class Intersections:
 
     def __getitem__(self, index):
         return self.intersections[index]
+    
+    def append(self,intersection):
+        self.intersections.append(intersection) 
+
+    def __delitem__(self, i): del self.intersections[i]
+
+    def __setitem__(self, i, v):
+        #self.check(v)
+        self.intersections[i] = v
+
+
+    def extend(self,intersections):
+        self.intersections.extend(intersections)
+        self.intersections.sort(key = intersect_sort_function)
+
+    def insert(self, i, v):
+#        self.check(v)
+        self.intersections.insert(i, v)
 
     def hit(self):
         hit = None
@@ -396,31 +417,57 @@ class World:
 def default_world():
     light = PointLight(Tuple(-10, 10, -10, 1), Color(1, 1, 1))
     s1 = Sphere()
+    s1.material = Material()
     s1.material.color = Color(0.8, 1.0, 0.6)
     s1.material.diffuse = 0.7
     s1.material.specular = 0.2
     s2 = Sphere()
+    s2.material = Material()
     s2.set_transform(Matrix.scaling(0.5,0.5, 0.5))
     return World([s1, s2], light)
 
 def intersect_world(world, ray):
     xs = Intersections()
     for obj in world.objects:
-        xs.add(obj.intersect(ray))
+        intersections = intersect(obj,ray)
+        xs.extend(intersections)
     return xs
 
 
-def test_default_world():
-    w = default_world()
-    assert len(w.objects) == 2
-    assert w.light == PointLight(Tuple(-10, 10, -10, 1), Color(1, 1, 1))
 
-def test_intersect_world():
-    w = default_world()
-    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
-    xs = intersect_world(w, r)
-    assert len(xs) == 4
-    assert xs[0].t == 4
-    assert xs[1].t == 4.5
-    assert xs[2].t == 5.5
-    assert xs[3].t == 6
+
+class Computations:
+    def __init__(self, t, object, point, eyev, normalv):
+        self.t = t
+        self.object = object
+        self.point = point
+        self.eyev = eyev
+        self.normalv = normalv
+
+def prepare_computations(intersection, ray):
+    t = intersection.t
+    object = intersection.object
+    point = ray.position(t)
+    eyev = -ray.direction
+    normalv = normal_at(object, point)
+    inside = False
+    if normalv.dot(eyev) < 0:
+        inside = True
+        normalv = -normalv
+
+    return Computations(t, object, point, eyev, normalv)
+
+def shade_hit(world, comps):
+    return lighting(comps.object.material, world.light, comps.point, comps.eyev, comps.normalv)
+
+def color_at(world, ray):
+    xs = intersect_world(world,ray)
+    hit = xs.hit()
+    if hit:
+        comps = prepare_computations(hit, ray)
+        return shade_hit(world, comps)
+    else:
+        return Color(0, 0, 0)
+
+def intersect_sort_function(intersection):
+  return intersection.t
