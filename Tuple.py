@@ -387,3 +387,40 @@ def lighting(material, light, point, eyev, normalv):
     specular = effective_color * material.specular * pow(max(reflect_dot_eye, 0), material.shininess)
 
     return ambient + diffuse + specular
+
+class World:
+    def __init__(self, objects=[], light=None):
+        self.objects = objects
+        self.light = light
+
+def default_world():
+    light = PointLight(Tuple(-10, 10, -10, 1), Color(1, 1, 1))
+    s1 = Sphere()
+    s1.material.color = Color(0.8, 1.0, 0.6)
+    s1.material.diffuse = 0.7
+    s1.material.specular = 0.2
+    s2 = Sphere()
+    s2.set_transform(Matrix.scaling(0.5,0.5, 0.5))
+    return World([s1, s2], light)
+
+def intersect_world(world, ray):
+    xs = Intersections()
+    for obj in world.objects:
+        xs.add(obj.intersect(ray))
+    return xs
+
+
+def test_default_world():
+    w = default_world()
+    assert len(w.objects) == 2
+    assert w.light == PointLight(Tuple(-10, 10, -10, 1), Color(1, 1, 1))
+
+def test_intersect_world():
+    w = default_world()
+    r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
+    xs = intersect_world(w, r)
+    assert len(xs) == 4
+    assert xs[0].t == 4
+    assert xs[1].t == 4.5
+    assert xs[2].t == 5.5
+    assert xs[3].t == 6
