@@ -56,7 +56,7 @@ def main():
 
     world.light = PointLight(point(-10,10,-10),Color(1,1,1))
     # Create the camera
-    camera = Camera(100, 50, math.pi / 3)
+    camera = Camera(500, 250, math.pi / 3)
     camera.transform = view_transform(Tuple(0, 1.5, -5, 1), Tuple(0, 1, 0, 1), Tuple(0, 1, 0, 0))
 
     # Render the scene

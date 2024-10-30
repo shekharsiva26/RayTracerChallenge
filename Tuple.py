@@ -391,7 +391,7 @@ def normal_at(sphere, world_point):
 def reflect(v, n):
     return v - n * 2 * v.dot(n)
 
-def lighting(material, light, point, eyev, normalv):
+def lighting(material, light, point, eyev, normalv,in_shadow=False):
     effective_color = light.intensity * material.color
     
     # Ambient lighting
@@ -448,6 +448,7 @@ class Computations:
         self.point = point
         self.eyev = eyev
         self.normalv = normalv
+        self.over_point=0
 
 def prepare_computations(intersection, ray):
     t = intersection.t
@@ -462,8 +463,15 @@ def prepare_computations(intersection, ray):
 
     return Computations(t, object, point, eyev, normalv)
 
-def shade_hit(world, comps):
-    return lighting(comps.object.material, world.light, comps.point, comps.eyev, comps.normalv)
+def shade_hit(world: World, comps: Computations):
+    
+    #color = world.ambient_light * comps.surface_color
+    comps.over_point = comps.point + comps.normalv * 0.001
+    shadowed = is_shadowed(world, comps.over_point)
+    color = lighting(comps.object.material, world.light, comps.over_point, comps.eyev, comps.normalv,shadowed)
+    
+    return color
+#    return lighting(comps.object.material, world.light, comps.point, comps.eyev, comps.normalv)
 
 def color_at(world, ray):
     xs = intersect_world(world,ray)
@@ -540,6 +548,6 @@ def is_shadowed(world, point):
     distance = v.magnitude()
     direction = v.normalize()
     r = Ray(point, direction)
-    xs = world.intersect(r)
+    xs = intersect_world(world,r)
     h = xs.hit()
     return h and h.t < distance

@@ -602,7 +602,7 @@ def test_intersect_world():
     assert xs[2].t == 5.5
     assert xs[3].t == 6
 
-def test_shade_hit():
+def test_shade_hit1():
     w = default_world()
     r = Ray(Tuple(0, 0, -5, 1), Tuple(0, 0, 1, 0))
     xs = intersect_world(w,r)
@@ -671,3 +671,29 @@ def test_ray_for_pixel_transformed_camera():
     r = ray_for_pixel(c, 100, 50)
     assert r.origin == (Tuple(0, 2, -5, 1))
     assert r.direction == (Tuple(math.sqrt(2) / 2, 0, -math.sqrt(2) / 2, 0))
+
+def test_shade_hit():
+    # Create world, light, and spheres as described in the scenario
+    world = World()
+    world.light = PointLight(point(0, 0, -10), Color(1, 1, 1))
+    sphere1 = Sphere()
+    sphere1.material = Material()
+    sphere2 = Sphere()
+    sphere2.material = Material()
+    sphere2.transform = Matrix.translation(0, 0, 10)
+    world.add_object(sphere1)
+    world.add_object(sphere2)
+   # world.light_source = light
+
+    # Create ray and intersection
+    ray = Ray(point(0, 0, 5), vector(0, 0, 1))
+    intersection = Intersection(4, sphere2)
+
+    # Prepare computations
+    comps = prepare_computations(intersection, ray)
+
+    # Shade hit
+    color = shade_hit(world, comps)
+
+    # Assert result
+    assert color == Color(0.1, 0.1, 0.1)
