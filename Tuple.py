@@ -397,17 +397,20 @@ def lighting(material, light, point, eyev, normalv):
     # Ambient lighting
     ambient = effective_color * material.ambient
 
+    if not in_shadow:
     # Diffuse lighting
-    light_v = (light.position - point).normalize()
-    light_dot_normal = light_v.dot(normalv)
-    diffuse = effective_color * material.diffuse * max(light_dot_normal, 0)
+        light_v = (light.position - point).normalize()
+        light_dot_normal = light_v.dot(normalv)
+        diffuse = effective_color * material.diffuse * max(light_dot_normal, 0)
 
-    # Specular lighting
-    reflect_v = reflect(-light_v, normalv)
-    reflect_dot_eye = reflect_v.dot(eyev)
-    specular = effective_color * material.specular * pow(max(reflect_dot_eye, 0), material.shininess)
+        # Specular lighting
+        reflect_v = reflect(-light_v, normalv)
+        reflect_dot_eye = reflect_v.dot(eyev)
+        specular = effective_color * material.specular * pow(max(reflect_dot_eye, 0), material.shininess)
 
-    return ambient + diffuse + specular
+        return ambient + diffuse + specular
+    else:
+        return ambient
 
 class World:
     def __init__(self, objects=[], light=None):
@@ -531,3 +534,12 @@ def render(camera, world):
             image.write_pixel(x, y, color)
 
     return image
+
+def is_shadowed(world, point):
+    v = world.light.position - point
+    distance = v.magnitude()
+    direction = v.normalize()
+    r = Ray(point, direction)
+    xs = world.intersect(r)
+    h = xs.hit()
+    return h and h.t < distance
