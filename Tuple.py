@@ -244,13 +244,27 @@ class PointLight:
     def __eq__(self, other):
         return self.intensity == other.intensity  and self.position == other.position
 
+
+class StripePattern:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+    def pattern_at(self, point):
+        stripe_width = 1.0
+        if int(point.x / stripe_width) % 2 == 0:
+            return self.a
+        else:
+            return self.b
+
 class Material:
-    def __init__(self, color=Color(1, 1, 1), ambient=0.1, diffuse=0.9, specular=0.9, shininess=200):
+    def __init__(self, color=Color(1, 1, 1), ambient=0.1, diffuse=0.9, specular=0.9, shininess=200,pattern=None):
         self.color = color
         self.ambient = ambient
         self.diffuse = diffuse
         self.specular = specular
         self.shininess = shininess
+        self.pattern = pattern
 
 class Shape:
     def __init__(self,transform=identity_matrix,material = Material()):
@@ -420,8 +434,14 @@ def normal_at(sphere:Sphere, world_point):
 def reflect(v, n):
     return v - n * 2 * v.dot(n)
 
-def lighting(material, light, point, eyev, normalv,in_shadow=False):
-    effective_color = light.intensity * material.color
+def lighting(material: Material, light, point, eyev, normalv,in_shadow=False):
+
+    if material.pattern:
+        color = material.pattern.pattern_at(point)
+    else:
+        color = material.color
+
+    effective_color = light.intensity * color
     
     # Ambient lighting
     ambient = effective_color * material.ambient

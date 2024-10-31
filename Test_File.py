@@ -734,3 +734,21 @@ def test_ray_intersecting_plane_below():
     assert len(xs) == 1
     assert xs[0].t == 1
     assert xs[0].object == p
+
+
+def test_lighting_with_pattern():
+    m = Material()
+    m.pattern = StripePattern(Color(1, 1, 1), Color(0, 0, 0))
+    m.ambient = 1
+    m.diffuse = 0
+    m.specular = 0
+
+    eye_v = vector(0, 0, -1)
+    normal_v = vector(0, 0, -1)
+    light = PointLight(point(0, 0, -10), Color(1, 1, 1))
+
+    c1 = lighting(m, light, point(0.9, 0, 0), eye_v, normal_v, False)
+    c2 = lighting(m, light, point(1.1, 0, 0), eye_v, normal_v, False)
+
+    assert c1 ==  Color(1, 1, 1)
+    assert c2 ==  Color(0, 0, 0)
