@@ -1,5 +1,6 @@
 import math
 import collections
+import abc
 
 class Tuple:
     def __init__(self, x, y, z, w):
@@ -251,25 +252,51 @@ class Material:
         self.specular = specular
         self.shininess = shininess
 
+class Shape:
+    def __init__(self,transform=identity_matrix,material = Material()):
+        self.transform = transform
+        self.material=material
 
-class Sphere:
-    def __init__(self, center=Tuple(0, 0, 0, 1), radius=1):
-        self.center = center
-        self.radius = radius
+    def intersect(self,ray):
+         transformed_ray = ray.transform(self.transform.inverse())
+         self.saved_ray = transformed_ray
+         return self.local_intersect(transformed_ray)
+    
+    def set_material(self, material):
+        self._material = material
+
     def material(self):
         return self._material
 
-    def set_material(self, material):
-        self._material = material
-    def __init__(self, transform=identity_matrix,center=Tuple(0, 0, 0, 1),radius=1):
-        self.transform = transform
-        self.center = center
-        self.radius = radius
-
     def set_transform(self, t):
         self.transform = t
+        
+    def normal_at(self, world_point):
+        object_point = self.transform.inverse() * world_point
+        object_normal = self.local_normal_at(object_point)
+        world_normal = self.transform.inverse().transpose() * object_normal
+        world_normal.w = 0
+        return world_normal.normalize()
 
-    def intersect(self, ray):
+
+
+
+class Sphere (Shape):
+    def __init__(self, center=Tuple(0, 0, 0, 1), radius=1,transform=identity_matrix,material =Material()):
+        self.center = center
+        self.radius = radius
+        super().__init__(transform,material)
+
+   
+    def __init__(self, transform=identity_matrix,center=Tuple(0, 0, 0, 1),radius=1):
+        self.center = center
+        self.radius = radius
+        super().__init__(transform)
+    
+    def local_normal_at(self,local_point):
+        return local_point - Tuple(0, 0, 0, 1)   
+    
+    def local_intersect(self, ray):
         sphere_to_ray = ray.origin - self.center
         a = ray.direction.dot(ray.direction)
         b = 2 * sphere_to_ray.dot(ray.direction)
@@ -282,6 +309,7 @@ class Sphere:
             t1 = (-b - math.sqrt(discriminant)) / (2 * a)
             t2 = (-b + math.sqrt(discriminant)) / (2 * a)
             return Intersections(Intersection(t1, self), Intersection(t2, self))
+
 
 class Intersection:
     def __init__(self, t, object):
@@ -377,16 +405,17 @@ def canvas_to_ppm(canvas):
 
     return "\n".join(ppm_lines)
 
-def intersect(sphere, ray):
-    transformed_ray = ray.transform(sphere.transform.inverse())
-    return sphere.intersect(transformed_ray)
+def intersect(shape, ray):
+    #transformed_ray = ray.transform(sphere.transform.inverse())
+    return shape.intersect(ray)
 
-def normal_at(sphere, world_point):
-    object_point = sphere.transform.inverse() * world_point
-    object_normal = object_point - Tuple(0, 0, 0, 1)
-    world_normal = sphere.transform.inverse().transpose() * object_normal
-    world_normal.w = 0
-    return world_normal.normalize()
+def normal_at(sphere:Sphere, world_point):
+    return sphere.normal_at(world_point)
+#    object_point = sphere.transform.inverse() * world_point
+#    object_normal = object_point - Tuple(0, 0, 0, 1)
+#    world_normal = sphere.transform.inverse().transpose() * object_normal
+#    world_normal.w = 0
+#    return world_normal.normalize()
 
 def reflect(v, n):
     return v - n * 2 * v.dot(n)
@@ -551,3 +580,18 @@ def is_shadowed(world, point):
     xs = intersect_world(world,r)
     h = xs.hit()
     return h and h.t < distance
+
+def test_shape():
+    return Sphere()
+
+
+class Plane (Shape):
+    def local_intersect(self, ray:Ray):
+        if(abs(ray.direction.y) < 0.01):
+            return Intersections()
+        else:
+            t = (-ray.origin.y/ray.direction.y)
+            return Intersections(Intersection(t,self))    
+        
+    def local_normal_at(self, point):
+        return vector(0,1,0)

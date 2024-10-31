@@ -697,3 +697,40 @@ def test_shade_hit():
 
     # Assert result
     assert color == Color(0.1, 0.1, 0.1)
+
+def test_intersect_scaled_shape():
+    ray = Ray(point(0, 0, -5), vector(0, 0, 1))
+    shape = test_shape()
+    shape.transform = Matrix.scaling(2, 2, 2)
+
+    xs = shape.intersect(ray)
+
+    assert shape.saved_ray.origin == point(0, 0, -2.5)
+    assert shape.saved_ray.direction == vector(0, 0, 0.5)
+
+def test_intersect_translated_shape():
+    ray = Ray(point(0, 0, -5), vector(0, 0, 1))
+    shape = test_shape()
+    shape.transform = Matrix.translation(5, 0, 0)
+
+    xs = shape.intersect(ray)
+
+    assert shape.saved_ray.origin == point(-5, 0, -5)
+    assert shape.saved_ray.direction == vector(0, 0, 1)
+
+
+def test_ray_intersecting_plane():
+    p = Plane()
+    r = Ray(point(0, 1, 0), vector(0, -1,0))
+    xs = p.local_intersect(r)
+    assert len(xs) == 1
+    assert xs[0].t == 1
+    assert xs[0].object == p
+
+def test_ray_intersecting_plane_below():
+    p = Plane()
+    r = Ray(point(0, -1, 0), vector(0, 1,0))
+    xs = p.local_intersect(r)
+    assert len(xs) == 1
+    assert xs[0].t == 1
+    assert xs[0].object == p
